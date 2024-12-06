@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shopping List</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -326,20 +326,13 @@
         const SUPABASE_URL = 'https://offirllwzysvevabtjrl.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mZmlybGx3enlzdmV2YWJ0anJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzM1MjcxNjgsImV4cCI6MjA0OTEwMzE2OH0.R7D7IRCyldPn2-OBQZ5wtLE8MkN2u-GnHpkNg8rFRkk';
         
-        // Create Supabase client with debug logging
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-            db: {
-                schema: 'public'
-            },
-            auth: {
-                persistSession: true
-            }
-        });
+        // Create Supabase client
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // Initialize or load data
         let winkles = JSON.parse(localStorage.getItem('shoppingWinkles') || '{}');
-        let activeWinkle = null;
         let listCode = localStorage.getItem('listCode');
+        let activeWinkle = null;
 
         // Function to generate a random list code
         function generateListCode() {
