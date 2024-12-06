@@ -501,16 +501,32 @@
                 .subscribe();
         }
 
-        // Clear any old list code on page load
-        localStorage.removeItem('listCode');
-        listCode = null;
+        // Load data from Supabase on page load if we have a list code
+        async function loadInitialData() {
+            if (listCode) {
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('shopping_list')
+                        .select('*')
+                        .eq('code', listCode)
+                        .single();
 
-        // Check URL for list code
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlListCode = urlParams.get('list');
-        if (urlListCode) {
-            joinList(urlListCode.toUpperCase());
+                    if (error) throw error;
+
+                    if (data && data.data) {
+                        winkles = JSON.parse(data.data);
+                        localStorage.setItem('shoppingWinkles', JSON.stringify(winkles));
+                        renderWinkles();
+                        setupRealtimeSync();
+                    }
+                } catch (error) {
+                    console.error('Failed to load initial data:', error);
+                }
+            }
         }
+
+        // Load initial data
+        loadInitialData();
 
         // Update all functions to use saveAndSync
         function addWinkle() {
@@ -774,6 +790,13 @@
 
         // Initial render
         renderWinkles();
+
+        // Check URL for list code
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlListCode = urlParams.get('list');
+        if (urlListCode) {
+            joinList(urlListCode.toUpperCase());
+        }
     </script>
 </body>
 </html>
