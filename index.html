@@ -359,24 +359,17 @@
                     localStorage.setItem('listCode', listCode);
                 }
 
-                console.log('Creating list with code:', listCode);
-                console.log('List data:', winkles);
-
                 // Create or update the list in Supabase
                 const { data, error } = await supabase
-                    .from('shopping_lists')
+                    .from('shopping-list')
                     .upsert({ 
                         code: listCode,
                         data: JSON.stringify(winkles)
                     })
                     .select();
 
-                if (error) {
-                    console.error('Supabase error:', error);
-                    throw error;
-                }
+                if (error) throw error;
 
-                console.log('List created successfully:', data);
                 syncStatus.style.backgroundColor = '#4CAF50';
                 syncStatus.textContent = 'List created!';
 
@@ -400,7 +393,7 @@
                 console.error('Share error:', error);
                 syncStatus.style.backgroundColor = '#f44336';
                 syncStatus.textContent = 'Failed to create list';
-                alert('Failed to create list. Please try again. Error: ' + error.message);
+                alert('Failed to create list. Please try again.');
             }
 
             setTimeout(() => {
@@ -417,21 +410,14 @@
                 syncStatus.textContent = 'Joining list...';
 
                 try {
-                    console.log('Trying to join list with code:', code);
-
                     // Try to get the list
                     const { data, error } = await supabase
-                        .from('shopping_lists')
+                        .from('shopping-list')
                         .select('*')
                         .eq('code', code.toUpperCase())
                         .single();
 
-                    if (error) {
-                        console.error('Supabase error:', error);
-                        throw error;
-                    }
-
-                    console.log('Found list:', data);
+                    if (error) throw error;
 
                     // Successfully found the list
                     listCode = code.toUpperCase();
@@ -452,7 +438,7 @@
                     console.error('Join error:', error);
                     syncStatus.style.backgroundColor = '#f44336';
                     syncStatus.textContent = 'List not found';
-                    alert('List not found. Please check the code and try again. Error: ' + error.message);
+                    alert('List not found. Please check the code and try again.');
                 }
 
                 setTimeout(() => {
@@ -472,30 +458,21 @@
             syncStatus.textContent = 'Saving...';
 
             try {
-                console.log('Saving list:', listCode);
-                console.log('Data:', winkles);
-
-                const { data, error } = await supabase
-                    .from('shopping_lists')
+                const { error } = await supabase
+                    .from('shopping-list')
                     .update({ 
                         data: JSON.stringify(winkles)
                     })
-                    .eq('code', listCode)
-                    .select();
+                    .eq('code', listCode);
 
-                if (error) {
-                    console.error('Supabase error:', error);
-                    throw error;
-                }
-
-                console.log('Save successful:', data);
+                if (error) throw error;
+                
                 syncStatus.style.backgroundColor = '#4CAF50';
                 syncStatus.textContent = 'Saved!';
             } catch (error) {
                 console.error('Save error:', error);
                 syncStatus.style.backgroundColor = '#f44336';
                 syncStatus.textContent = 'Save failed';
-                alert('Failed to save changes. Error: ' + error.message);
             }
 
             setTimeout(() => {
@@ -506,11 +483,11 @@
         // Setup real-time sync
         function setupRealtimeSync() {
             supabase
-                .channel('shopping_lists')
+                .channel('shopping-list')
                 .on('postgres_changes', { 
                     event: 'UPDATE', 
                     schema: 'public', 
-                    table: 'shopping_lists',
+                    table: 'shopping-list',
                     filter: `code=eq.${listCode}`
                 }, payload => {
                     const newData = JSON.parse(payload.new.data);
