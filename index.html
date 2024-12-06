@@ -325,8 +325,17 @@
     <script>
         const SUPABASE_URL = 'https://xmvpsfppenjysaaaaaa.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtdnBzZnBwZW5qeXNhYWFhYWFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTA4MTY0MDcsImV4cCI6MjAwNjM5MjQwN30.KzBbMpJ9xQhGpYqpxGOCJH3r_4LUGESGxZRTUKEK6Uw';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
+        // Create Supabase client with debug logging
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+            db: {
+                schema: 'public'
+            },
+            auth: {
+                persistSession: true
+            }
+        });
+
         // Initialize or load data
         let winkles = JSON.parse(localStorage.getItem('shoppingWinkles') || '{}');
         let activeWinkle = null;
@@ -350,17 +359,24 @@
                     localStorage.setItem('listCode', listCode);
                 }
 
+                console.log('Creating list with code:', listCode);
+                console.log('List data:', winkles);
+
                 // Create or update the list in Supabase
-                const { error } = await supabase
+                const { data, error } = await supabase
                     .from('shopping_lists')
                     .upsert({ 
                         code: listCode,
-                        data: JSON.stringify(winkles),
-                        created_at: new Date().toISOString()
-                    });
+                        data: JSON.stringify(winkles)
+                    })
+                    .select();
 
-                if (error) throw error;
+                if (error) {
+                    console.error('Supabase error:', error);
+                    throw error;
+                }
 
+                console.log('List created successfully:', data);
                 syncStatus.style.backgroundColor = '#4CAF50';
                 syncStatus.textContent = 'List created!';
 
@@ -377,14 +393,14 @@
                             url: url
                         });
                     } catch (err) {
-                        console.log('Share cancelled or failed');
+                        console.log('Share cancelled');
                     }
                 }
             } catch (error) {
                 console.error('Share error:', error);
                 syncStatus.style.backgroundColor = '#f44336';
                 syncStatus.textContent = 'Failed to create list';
-                alert('Failed to create list. Please try again.');
+                alert('Failed to create list. Please try again. Error: ' + error.message);
             }
 
             setTimeout(() => {
@@ -401,16 +417,21 @@
                 syncStatus.textContent = 'Joining list...';
 
                 try {
+                    console.log('Trying to join list with code:', code);
+
                     // Try to get the list
                     const { data, error } = await supabase
                         .from('shopping_lists')
-                        .select('data')
+                        .select('*')
                         .eq('code', code.toUpperCase())
                         .single();
 
                     if (error) {
+                        console.error('Supabase error:', error);
                         throw error;
                     }
+
+                    console.log('Found list:', data);
 
                     // Successfully found the list
                     listCode = code.toUpperCase();
@@ -431,7 +452,7 @@
                     console.error('Join error:', error);
                     syncStatus.style.backgroundColor = '#f44336';
                     syncStatus.textContent = 'List not found';
-                    alert('List not found. Please check the code and try again.');
+                    alert('List not found. Please check the code and try again. Error: ' + error.message);
                 }
 
                 setTimeout(() => {
@@ -451,22 +472,30 @@
             syncStatus.textContent = 'Saving...';
 
             try {
-                const { error } = await supabase
+                console.log('Saving list:', listCode);
+                console.log('Data:', winkles);
+
+                const { data, error } = await supabase
                     .from('shopping_lists')
                     .update({ 
-                        data: JSON.stringify(winkles),
-                        updated_at: new Date().toISOString()
+                        data: JSON.stringify(winkles)
                     })
-                    .eq('code', listCode);
+                    .eq('code', listCode)
+                    .select();
 
-                if (error) throw error;
-                
+                if (error) {
+                    console.error('Supabase error:', error);
+                    throw error;
+                }
+
+                console.log('Save successful:', data);
                 syncStatus.style.backgroundColor = '#4CAF50';
                 syncStatus.textContent = 'Saved!';
             } catch (error) {
                 console.error('Save error:', error);
                 syncStatus.style.backgroundColor = '#f44336';
                 syncStatus.textContent = 'Save failed';
+                alert('Failed to save changes. Error: ' + error.message);
             }
 
             setTimeout(() => {
