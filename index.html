@@ -361,7 +361,7 @@
 
                 // Create or update the list in Supabase
                 const { data, error } = await supabase
-                    .from('shopping-list')
+                    .from('shopping_list')
                     .upsert({ 
                         code: listCode,
                         data: JSON.stringify(winkles)
@@ -412,7 +412,7 @@
                 try {
                     // Try to get the list
                     const { data, error } = await supabase
-                        .from('shopping-list')
+                        .from('shopping_list')
                         .select('*')
                         .eq('code', code.toUpperCase())
                         .single();
@@ -459,7 +459,7 @@
 
             try {
                 const { error } = await supabase
-                    .from('shopping-list')
+                    .from('shopping_list')
                     .update({ 
                         data: JSON.stringify(winkles)
                     })
@@ -483,11 +483,11 @@
         // Setup real-time sync
         function setupRealtimeSync() {
             supabase
-                .channel('shopping-list')
+                .channel('shopping_list')
                 .on('postgres_changes', { 
                     event: 'UPDATE', 
                     schema: 'public', 
-                    table: 'shopping-list',
+                    table: 'shopping_list',
                     filter: `code=eq.${listCode}`
                 }, payload => {
                     const newData = JSON.parse(payload.new.data);
