@@ -327,7 +327,7 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mZmlybGx3enlzdmV2YWJ0anJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzM1MjcxNjgsImV4cCI6MjA0OTEwMzE2OH0.R7D7IRCyldPn2-OBQZ5wtLE8MkN2u-GnHpkNg8rFRkk';
         
         // Create Supabase client
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // Initialize or load data
         let winkles = JSON.parse(localStorage.getItem('shoppingWinkles') || '{}');
@@ -353,7 +353,7 @@
                 }
 
                 // Create or update the list in Supabase
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('shopping_list')
                     .upsert({ 
                         code: listCode,
@@ -404,7 +404,7 @@
 
                 try {
                     // Try to get the list
-                    const { data, error } = await supabase
+                    const { data, error } = await supabaseClient
                         .from('shopping_list')
                         .select('*')
                         .eq('code', code.toUpperCase())
@@ -451,7 +451,7 @@
             syncStatus.textContent = 'Saving...';
 
             try {
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('shopping_list')
                     .update({ 
                         data: JSON.stringify(winkles)
@@ -475,7 +475,7 @@
 
         // Setup real-time sync
         function setupRealtimeSync() {
-            supabase
+            supabaseClient
                 .channel('shopping_list')
                 .on('postgres_changes', { 
                     event: 'UPDATE', 
