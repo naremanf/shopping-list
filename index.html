@@ -382,49 +382,84 @@
         async function joinList() {
             const code = prompt('Enter the list code:');
             if (code) {
-                listCode = code.toUpperCase();
-                localStorage.setItem('listCode', listCode);
-                await loadList();
+                const syncStatus = document.getElementById('syncStatus');
+                syncStatus.style.display = 'block';
+                syncStatus.textContent = 'Checking list...';
+
+                try {
+                    // Check if list exists first
+                    const { data, error } = await supabase
+                        .from('shopping_lists')
+                        .select('data')
+                        .eq('code', code.toUpperCase())
+                        .maybeSingle();
+
+                    if (data && data.data) {
+                        // List exists, join it
+                        listCode = code.toUpperCase();
+                        localStorage.setItem('listCode', listCode);
+                        winkles = JSON.parse(data.data);
+                        localStorage.setItem('shoppingWinkles', JSON.stringify(winkles));
+                        renderWinkles();
+                        setupRealtimeSync();
+                        
+                        syncStatus.style.backgroundColor = '#4CAF50';
+                        syncStatus.textContent = 'Joined list!';
+                    } else {
+                        alert('List not found. Please check the code and try again.');
+                        syncStatus.style.backgroundColor = '#f44336';
+                        syncStatus.textContent = 'List not found';
+                    }
+                } catch (error) {
+                    console.error('Join error:', error);
+                    alert('Failed to join list. Please try again.');
+                    syncStatus.style.backgroundColor = '#f44336';
+                    syncStatus.textContent = 'Join failed';
+                }
+
+                setTimeout(() => {
+                    syncStatus.style.display = 'none';
+                }, 2000);
             }
         }
 
         // Load list from Supabase
         async function loadList() {
-            if (!listCode) return;
+            if (!listCode) {
+                console.log('No list code, skipping load');
+                return;
+            }
 
             const syncStatus = document.getElementById('syncStatus');
             syncStatus.style.display = 'block';
             syncStatus.textContent = 'Loading...';
 
             try {
+                // First check if list exists
                 const { data, error } = await supabase
                     .from('shopping_lists')
                     .select('data')
                     .eq('code', listCode)
-                    .single();
-
-                if (error) {
-                    if (error.code === 'PGRST116') {
-                        // List not found, create it
-                        const { error: insertError } = await supabase
-                            .from('shopping_lists')
-                            .insert({ 
-                                code: listCode,
-                                data: JSON.stringify(winkles)
-                            });
-                        if (insertError) throw insertError;
-                    } else {
-                        throw error;
-                    }
-                }
+                    .maybeSingle();  // Use maybeSingle instead of single to avoid error
 
                 if (data && data.data) {
+                    // List exists, load it
                     winkles = JSON.parse(data.data);
                     localStorage.setItem('shoppingWinkles', JSON.stringify(winkles));
                     renderWinkles();
                     
                     syncStatus.style.backgroundColor = '#4CAF50';
                     syncStatus.textContent = 'Loaded!';
+                    
+                    // Subscribe to real-time changes
+                    setupRealtimeSync();
+                } else {
+                    // List doesn't exist yet, clear the code
+                    console.log('List not found, clearing code');
+                    listCode = null;
+                    localStorage.removeItem('listCode');
+                    syncStatus.style.backgroundColor = '#f44336';
+                    syncStatus.textContent = 'List not found';
                 }
             } catch (error) {
                 console.error('Load error:', error);
@@ -435,9 +470,6 @@
             setTimeout(() => {
                 syncStatus.style.display = 'none';
             }, 2000);
-
-            // Subscribe to real-time changes
-            setupRealtimeSync();
         }
 
         // Setup real-time sync
@@ -504,14 +536,20 @@
             }, 2000);
         }
 
+        // Clear any old list code on page load
+        const oldListCode = localStorage.getItem('listCode');
+        if (oldListCode) {
+            localStorage.removeItem('listCode');
+            listCode = null;
+        }
+
         // Check URL for list code
         const urlParams = new URLSearchParams(window.location.search);
         const urlListCode = urlParams.get('list');
         if (urlListCode) {
+            // If list code is in URL, try to join that list
             listCode = urlListCode.toUpperCase();
             localStorage.setItem('listCode', listCode);
-            loadList();
-        } else if (listCode) {
             loadList();
         }
 
