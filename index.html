@@ -342,9 +342,24 @@
             if (!listCode) {
                 listCode = generateListCode();
                 localStorage.setItem('listCode', listCode);
-                await saveAndSync();
             }
             
+            // Create initial empty list in Supabase
+            try {
+                const { error } = await supabase
+                    .from('shopping_lists')
+                    .insert({ 
+                        code: listCode,
+                        data: JSON.stringify(winkles)
+                    });
+                
+                if (error && error.code !== '23505') { // Ignore duplicate key error
+                    throw error;
+                }
+            } catch (error) {
+                console.error('Initial save error:', error);
+            }
+
             // Always show the code first
             alert('Your list code is: ' + listCode + '\nShare this code with others to let them join your list.');
             
@@ -358,7 +373,6 @@
                         url: url
                     });
                 } catch (err) {
-                    // Do nothing if user cancels share
                     console.log('Share cancelled or failed');
                 }
             }
@@ -389,9 +403,22 @@
                     .eq('code', listCode)
                     .single();
 
-                if (error) throw error;
+                if (error) {
+                    if (error.code === 'PGRST116') {
+                        // List not found, create it
+                        const { error: insertError } = await supabase
+                            .from('shopping_lists')
+                            .insert({ 
+                                code: listCode,
+                                data: JSON.stringify(winkles)
+                            });
+                        if (insertError) throw insertError;
+                    } else {
+                        throw error;
+                    }
+                }
 
-                if (data) {
+                if (data && data.data) {
                     winkles = JSON.parse(data.data);
                     localStorage.setItem('shoppingWinkles', JSON.stringify(winkles));
                     renderWinkles();
@@ -467,6 +494,9 @@
                 console.error('Save error:', error);
                 syncStatus.style.backgroundColor = '#f44336';
                 syncStatus.textContent = 'Save failed';
+                
+                // Log the actual error for debugging
+                console.log('Detailed error:', error);
             }
 
             setTimeout(() => {
