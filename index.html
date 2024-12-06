@@ -339,43 +339,57 @@
 
         // Function to share the list
         async function shareList() {
-            if (!listCode) {
-                listCode = generateListCode();
-                localStorage.setItem('listCode', listCode);
-            }
-            
-            // Create initial empty list in Supabase
+            const syncStatus = document.getElementById('syncStatus');
+            syncStatus.style.display = 'block';
+            syncStatus.textContent = 'Creating list...';
+
             try {
+                // Generate new code if we don't have one
+                if (!listCode) {
+                    listCode = generateListCode();
+                    localStorage.setItem('listCode', listCode);
+                }
+
+                // Create or update the list in Supabase
                 const { error } = await supabase
                     .from('shopping_lists')
-                    .insert({ 
+                    .upsert({ 
                         code: listCode,
-                        data: JSON.stringify(winkles)
+                        data: JSON.stringify(winkles),
+                        created_at: new Date().toISOString()
                     });
+
+                if (error) throw error;
+
+                syncStatus.style.backgroundColor = '#4CAF50';
+                syncStatus.textContent = 'List created!';
+
+                // Always show the code
+                alert('Your list code is: ' + listCode + '\nShare this code with others to let them join your list.');
                 
-                if (error && error.code !== '23505') { // Ignore duplicate key error
-                    throw error;
+                const url = window.location.href.split('?')[0] + '?list=' + listCode;
+                
+                if (navigator.share) {
+                    try {
+                        await navigator.share({
+                            title: 'Shopping List',
+                            text: 'Join my shopping list with code: ' + listCode,
+                            url: url
+                        });
+                    } catch (err) {
+                        console.log('Share cancelled or failed');
+                    }
                 }
             } catch (error) {
-                console.error('Initial save error:', error);
+                console.error('Share error:', error);
+                syncStatus.style.backgroundColor = '#f44336';
+                syncStatus.textContent = 'Failed to create list';
+                alert('Failed to create list. Please try again.');
             }
 
-            // Always show the code first
-            alert('Your list code is: ' + listCode + '\nShare this code with others to let them join your list.');
-            
-            const url = window.location.href.split('?')[0] + '?list=' + listCode;
-            
-            if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: 'Shopping List',
-                        text: 'Join my shopping list with code: ' + listCode,
-                        url: url
-                    });
-                } catch (err) {
-                    console.log('Share cancelled or failed');
-                }
-            }
+            setTimeout(() => {
+                syncStatus.style.display = 'none';
+            }, 2000);
         }
 
         // Function to join an existing list
@@ -384,37 +398,40 @@
             if (code) {
                 const syncStatus = document.getElementById('syncStatus');
                 syncStatus.style.display = 'block';
-                syncStatus.textContent = 'Checking list...';
+                syncStatus.textContent = 'Joining list...';
 
                 try {
-                    // Check if list exists first
+                    // Try to get the list
                     const { data, error } = await supabase
                         .from('shopping_lists')
                         .select('data')
                         .eq('code', code.toUpperCase())
-                        .maybeSingle();
+                        .single();
 
+                    if (error) {
+                        throw error;
+                    }
+
+                    // Successfully found the list
+                    listCode = code.toUpperCase();
+                    localStorage.setItem('listCode', listCode);
+                    
                     if (data && data.data) {
-                        // List exists, join it
-                        listCode = code.toUpperCase();
-                        localStorage.setItem('listCode', listCode);
                         winkles = JSON.parse(data.data);
                         localStorage.setItem('shoppingWinkles', JSON.stringify(winkles));
                         renderWinkles();
-                        setupRealtimeSync();
-                        
-                        syncStatus.style.backgroundColor = '#4CAF50';
-                        syncStatus.textContent = 'Joined list!';
-                    } else {
-                        alert('List not found. Please check the code and try again.');
-                        syncStatus.style.backgroundColor = '#f44336';
-                        syncStatus.textContent = 'List not found';
                     }
+
+                    // Setup real-time sync
+                    setupRealtimeSync();
+                    
+                    syncStatus.style.backgroundColor = '#4CAF50';
+                    syncStatus.textContent = 'Joined list!';
                 } catch (error) {
                     console.error('Join error:', error);
-                    alert('Failed to join list. Please try again.');
                     syncStatus.style.backgroundColor = '#f44336';
-                    syncStatus.textContent = 'Join failed';
+                    syncStatus.textContent = 'List not found';
+                    alert('List not found. Please check the code and try again.');
                 }
 
                 setTimeout(() => {
@@ -423,48 +440,33 @@
             }
         }
 
-        // Load list from Supabase
-        async function loadList() {
-            if (!listCode) {
-                console.log('No list code, skipping load');
-                return;
-            }
-
+        // Save and sync data
+        async function saveAndSync() {
+            if (!listCode) return;
+            
+            localStorage.setItem('shoppingWinkles', JSON.stringify(winkles));
+            
             const syncStatus = document.getElementById('syncStatus');
             syncStatus.style.display = 'block';
-            syncStatus.textContent = 'Loading...';
+            syncStatus.textContent = 'Saving...';
 
             try {
-                // First check if list exists
-                const { data, error } = await supabase
+                const { error } = await supabase
                     .from('shopping_lists')
-                    .select('data')
-                    .eq('code', listCode)
-                    .maybeSingle();  // Use maybeSingle instead of single to avoid error
+                    .update({ 
+                        data: JSON.stringify(winkles),
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('code', listCode);
 
-                if (data && data.data) {
-                    // List exists, load it
-                    winkles = JSON.parse(data.data);
-                    localStorage.setItem('shoppingWinkles', JSON.stringify(winkles));
-                    renderWinkles();
-                    
-                    syncStatus.style.backgroundColor = '#4CAF50';
-                    syncStatus.textContent = 'Loaded!';
-                    
-                    // Subscribe to real-time changes
-                    setupRealtimeSync();
-                } else {
-                    // List doesn't exist yet, clear the code
-                    console.log('List not found, clearing code');
-                    listCode = null;
-                    localStorage.removeItem('listCode');
-                    syncStatus.style.backgroundColor = '#f44336';
-                    syncStatus.textContent = 'List not found';
-                }
+                if (error) throw error;
+                
+                syncStatus.style.backgroundColor = '#4CAF50';
+                syncStatus.textContent = 'Saved!';
             } catch (error) {
-                console.error('Load error:', error);
+                console.error('Save error:', error);
                 syncStatus.style.backgroundColor = '#f44336';
-                syncStatus.textContent = 'Load failed';
+                syncStatus.textContent = 'Save failed';
             }
 
             setTimeout(() => {
@@ -500,57 +502,15 @@
                 .subscribe();
         }
 
-        // Save and sync data
-        async function saveAndSync() {
-            if (!listCode) return;
-            
-            localStorage.setItem('shoppingWinkles', JSON.stringify(winkles));
-            
-            const syncStatus = document.getElementById('syncStatus');
-            syncStatus.style.display = 'block';
-            syncStatus.textContent = 'Saving...';
-
-            try {
-                const { error } = await supabase
-                    .from('shopping_lists')
-                    .upsert({ 
-                        code: listCode,
-                        data: JSON.stringify(winkles)
-                    });
-
-                if (error) throw error;
-                
-                syncStatus.style.backgroundColor = '#4CAF50';
-                syncStatus.textContent = 'Saved!';
-            } catch (error) {
-                console.error('Save error:', error);
-                syncStatus.style.backgroundColor = '#f44336';
-                syncStatus.textContent = 'Save failed';
-                
-                // Log the actual error for debugging
-                console.log('Detailed error:', error);
-            }
-
-            setTimeout(() => {
-                syncStatus.style.display = 'none';
-            }, 2000);
-        }
-
         // Clear any old list code on page load
-        const oldListCode = localStorage.getItem('listCode');
-        if (oldListCode) {
-            localStorage.removeItem('listCode');
-            listCode = null;
-        }
+        localStorage.removeItem('listCode');
+        listCode = null;
 
         // Check URL for list code
         const urlParams = new URLSearchParams(window.location.search);
         const urlListCode = urlParams.get('list');
         if (urlListCode) {
-            // If list code is in URL, try to join that list
-            listCode = urlListCode.toUpperCase();
-            localStorage.setItem('listCode', listCode);
-            loadList();
+            joinList(urlListCode.toUpperCase());
         }
 
         // Update all functions to use saveAndSync
