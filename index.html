@@ -344,6 +344,10 @@
                 localStorage.setItem('listCode', listCode);
                 await saveAndSync();
             }
+            
+            // Always show the code first
+            alert('Your list code is: ' + listCode + '\nShare this code with others to let them join your list.');
+            
             const url = window.location.href.split('?')[0] + '?list=' + listCode;
             
             if (navigator.share) {
@@ -354,10 +358,9 @@
                         url: url
                     });
                 } catch (err) {
-                    alert('List code: ' + listCode + '\nURL: ' + url);
+                    // Do nothing if user cancels share
+                    console.log('Share cancelled or failed');
                 }
-            } else {
-                alert('List code: ' + listCode + '\nURL: ' + url);
             }
         }
 
