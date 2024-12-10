@@ -472,6 +472,8 @@
                         .from('shopping_list')
                         .select('*')
                         .eq('code', listCode)
+                        .order('created_at', { ascending: false })
+                        .limit(1)
                         .single();
 
                     if (error) throw error;
