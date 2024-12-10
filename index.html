@@ -6,319 +6,282 @@
     <title>Shopping List</title>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f0f0f0;
+            line-height: 1.6;
+            padding: 10px;
+            max-width: 100%;
+            margin: 0 auto;
+            background-color: #f5f5f5;
         }
 
         .container {
-            max-width: 800px;
+            max-width: 320px;
             margin: 0 auto;
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 10px;
         }
 
         h1 {
             text-align: center;
             color: #333;
-        }
-
-        .tab-container {
             margin-bottom: 20px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-        }
-
-        .tab-container-item {
-            display: flex;
-            align-items: center;
-            margin-right: 5px;
-        }
-
-        .tab-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .tab-button {
-            padding: 10px 20px;
-            border: none;
-            background-color: #f0f0f0;
-            cursor: pointer;
-            border-radius: 4px;
-            flex: 1;
-        }
-
-        .tab-button.active {
-            background-color: #007bff;
-            color: white;
-        }
-
-        .delete-category-btn {
-            padding: 2px 8px;
-            margin-left: 5px;
-            font-size: 16px;
-            font-weight: bold;
-        }
-
-        .tab-pane {
-            display: none;
-            padding: 20px;
-            background-color: #f8f9fa;
-            border-radius: 4px;
-        }
-
-        .tab-pane.active {
-            display: block;
+            font-size: 24px;
         }
 
         .add-winkle {
-            margin-bottom: 20px;
             display: flex;
-            align-items: center;
-            gap: 5px;
+            gap: 8px;
+            padding: 10px 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            margin: 0;
+            justify-content: center;
         }
 
         .add-winkle input {
-            padding: 5px;
-            width: 200px;
-            height: 30px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-
-        .add-winkle button {
-            height: 30px;
-            padding: 0 15px;
-        }
-
-        .date-section {
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-
-        .date-header {
-            padding: 10px;
-            background-color: #f8f9fa;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .winkle-items {
-            padding: 10px;
-        }
-
-        .item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 5px;
-            padding: 5px;
-            background-color: white;
-            border-radius: 4px;
-        }
-
-        .item.completed {
-            background-color: #e8f5e9;
-        }
-
-        .item input[type="checkbox"] {
-            margin-right: 10px;
-        }
-
-        .add-item {
-            margin-top: 10px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .add-item input {
-            flex: 1;
-            padding: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-
-        .add-item button {
-            padding: 5px 10px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .add-item button:hover {
-            background-color: #0056b3;
-        }
-
-        .toggle-icon {
-            display: inline-block;
-            width: 20px;
-            transition: transform 0.3s;
-        }
-
-        .date-section.collapsed .toggle-icon {
-            transform: rotate(-90deg);
-        }
-
-        .date-section.collapsed .winkle-items {
-            display: none;
-        }
-
-        .add-date {
-            margin: 20px 0;
-            display: flex;
-            gap: 10px;
-        }
-
-        .add-date input[type="date"] {
-            flex: 1;
+            width: 200px; /* Width for about 20 characters */
             padding: 8px;
             border: 1px solid #ddd;
-            border-radius: 4px;
+            border-radius: 6px;
+            font-size: 14px;
+            height: 36px;
         }
 
-        .add-date button {
+        button {
             padding: 8px 16px;
-            background-color: #28a745;
-            color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
+            background-color: #007bff;
+            color: white;
             cursor: pointer;
+            font-size: 14px;
+            min-width: 80px;
+            height: 36px;
+            transition: background-color 0.2s;
         }
 
-        .add-date button:hover {
-            background-color: #218838;
+        button:hover {
+            background-color: #0056b3;
         }
 
         .delete-btn {
             background-color: #dc3545;
-            color: white;
-            padding: 3px 8px;
-            margin-left: 10px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+            padding: 6px 12px;
+            min-width: 60px;
+            height: 36px;
         }
 
         .delete-btn:hover {
             background-color: #c82333;
         }
 
-        .date-title {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
+        .content-wrapper {
+            padding-bottom: 116px; /* Space for both action bars */
+            margin-bottom: 20px;
         }
 
-        .note-input {
-            padding: 3px 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            flex-grow: 0.5;
-            min-width: 150px;
+        .tab-container {
+            margin-top: 20px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+            padding: 0 5px;
+        }
+
+        .tab-button {
+            padding: 8px 16px;
             font-size: 14px;
-        }
-
-        .note-input:focus {
-            outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
-        }
-
-        .item.completed .note-input {
-            text-decoration: line-through;
-            color: #6c757d;
+            height: 36px;
             background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            color: #333;
+            font-weight: 500;
         }
 
-        .date-info {
-            display: flex;
-            align-items: center;
+        .tab-button.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
         }
 
-        .date-actions {
+        .tab-pane {
+            display: none;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        .winkle-header {
             display: flex;
+            justify-content: space-between;
             align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .winkle-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .add-item {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .add-item input {
+            width: 200px; 
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            height: 36px;
+        }
+
+        .items-container {
+            width: 280px; 
+            flex-direction: column;
             gap: 10px;
         }
 
-        .price-input {
-            padding: 3px 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            width: 100px;
+        .item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #eee;
+            margin-bottom: 4px;
+        }
+
+        .item-name {
             font-size: 14px;
+            color: #333;
+            flex: 1;
+            margin-right: 10px;
         }
 
-        .price-input:focus {
-            outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
-        }
-
-        .export-import {
-            margin: 20px;
-            padding: 10px;
-            background-color: #f0f0f0;
-            border-radius: 5px;
-        }
-        .export-import button {
-            margin: 5px;
-            padding: 8px 16px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .export-import input[type="file"] {
-            margin: 5px;
-        }
-
-        .sync-status {
+        .list-actions {
             position: fixed;
-            top: 10px;
-            right: 10px;
-            padding: 5px 10px;
-            border-radius: 5px;
-            background: #4CAF50;
-            color: white;
-            display: none;
+            bottom: 56px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: white;
+            border-top: 1px solid #eee;
         }
-        #qrcode {
-            text-align: center;
-            margin: 10px;
+
+        .list-actions button {
+            width: 100px;
+        }
+
+        @media (max-width: 300px) {
+            .container {
+                padding: 5px;
+            }
+
+            .add-winkle {
+                flex-direction: column;
+            }
+
+            .add-winkle input,
+            .add-winkle button {
+                width: 100%;
+            }
+
+            .tab-button {
+                flex: 1;
+                min-width: 120px;
+                text-align: center;
+            }
+
+            .add-item {
+                flex-direction: column;
+            }
+
+            .add-item input,
+            .add-item button {
+                width: 100%;
+            }
+
+            .item {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            .item-name {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .add-winkle input,
+            .add-item input {
+                height: 36px;
+            }
+
+            button {
+                height: 36px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="sync-status" id="syncStatus">Syncing...</div>
     <div class="export-import">
-        <button onclick="shareList()">Share List</button>
-        <button onclick="joinList()">Join List</button>
+        <div id="qrcode"></div>
     </div>
-    <div id="qrcode"></div>
     <div class="container">
         <h1>Shopping List</h1>
         
-        <div class="add-winkle">
-            <input type="text" id="newWinkleName" placeholder="Enter new category name...">
-            <button onclick="addWinkle()">Add Category</button>
+        <div class="content-wrapper">
+            <div class="tab-container">
+                <div id="tabButtons" class="tab-buttons"></div>
+                <div id="mainContent"></div>
+            </div>
         </div>
 
-        <div class="tab-container">
-            <div id="tabContent" class="tab-buttons"></div>
-            <div id="mainContent"></div>
+        <div class="list-actions">
+            <button onclick="shareList()">Share List</button>
+            <button onclick="joinList()">Join List</button>
+        </div>
+
+        <div class="add-winkle">
+            <input type="text" id="newWinkleName" placeholder="Enter category name" maxlength="20">
+            <button onclick="addWinkle()">Add Category</button>
         </div>
     </div>
 
@@ -528,23 +491,26 @@
         // Load initial data
         loadInitialData();
 
-        // Update all functions to use saveAndSync
+        // Function to add a new winkle (category)
         function addWinkle() {
-            const winkleName = document.getElementById('newWinkleName').value.trim();
-            if (winkleName && !winkles[winkleName]) {
-                winkles[winkleName] = {
-                    name: winkleName,
-                    dates: {}
+            const nameInput = document.getElementById('newWinkleName');
+            const name = nameInput.value.trim();
+            if (name && !winkles[name]) {
+                winkles[name] = {
+                    name: name,
+                    items: []
                 };
                 saveAndSync();
-                document.getElementById('newWinkleName').value = '';
+                nameInput.value = '';
                 renderWinkles();
             }
         }
 
+        // Function to delete a winkle (category)
         function deleteWinkle(winkleName) {
-            if (confirm(`Are you sure you want to delete the category "${winkleName}" and all its contents?`)) {
+            if (confirm('Delete this category and all its items?')) {
                 delete winkles[winkleName];
+                // If we deleted the active winkle, switch to another one
                 if (activeWinkle === winkleName) {
                     activeWinkle = Object.keys(winkles)[0] || null;
                 }
@@ -553,239 +519,104 @@
             }
         }
 
-        function addItem(winkleName, date) {
-            const itemNameInput = document.getElementById(`${winkleName}-${date}-itemName`);
-            const itemName = itemNameInput.value.trim();
+        // Function to add an item to a category
+        function addItem(winkleName) {
+            const itemInput = document.getElementById(`${winkleName}-newItem`);
+            const itemName = itemInput.value.trim();
             if (itemName) {
-                if (!winkles[winkleName]) winkles[winkleName] = { name: winkleName, dates: {} };
-                if (!winkles[winkleName].dates) winkles[winkleName].dates = {};
-                if (!winkles[winkleName].dates[date]) {
-                    winkles[winkleName].dates[date] = {
-                        items: [],
-                        price: '0'
-                    };
+                if (!winkles[winkleName].items) {
+                    winkles[winkleName].items = [];
                 }
-                if (!winkles[winkleName].dates[date].items) {
-                    winkles[winkleName].dates[date].items = [];
-                }
-                winkles[winkleName].dates[date].items.push({
-                    name: itemName,
-                    amount: '0',
-                    atHome: '0',
-                    note: '',
-                    completed: false
+                winkles[winkleName].items.push({
+                    name: itemName
                 });
                 saveAndSync();
-                itemNameInput.value = '';
+                itemInput.value = '';
                 renderWinkles();
             }
         }
 
-        function deleteItem(winkleName, date, itemIndex) {
-            if (confirm('Are you sure you want to delete this item?')) {
-                if (winkles[winkleName].dates[date].items) {
-                    winkles[winkleName].dates[date].items.splice(itemIndex, 1);
-                    saveAndSync();
-                    renderWinkles();
-                }
-            }
-        }
-
-        function updateItemNote(winkleName, date, itemIndex, note) {
-            if (winkles[winkleName].dates[date].items) {
-                winkles[winkleName].dates[date].items[itemIndex].note = note;
-                saveAndSync();
-            }
-        }
-
-        function toggleItemComplete(winkleName, date, itemIndex) {
-            if (winkles[winkleName].dates[date].items) {
-                winkles[winkleName].dates[date].items[itemIndex].completed = !winkles[winkleName].dates[date].items[itemIndex].completed;
-                saveAndSync();
-                renderWinkles();
-            }
-        }
-
-        function addDate(winkleName) {
-            const dateInput = document.getElementById(`date-${winkleName}`);
-            const date = dateInput.value;
-            if (date) {
-                if (!winkles[winkleName]) winkles[winkleName] = { name: winkleName, dates: {} };
-                if (!winkles[winkleName].dates) winkles[winkleName].dates = {};
-                if (!winkles[winkleName].dates[date]) {
-                    winkles[winkleName].dates[date] = {
-                        items: [],
-                        price: '0'
-                    };
-                }
-                saveAndSync();
-                dateInput.value = '';
-                renderWinkles();
-            }
-        }
-
-        function deleteDate(winkleName, date) {
-            if (confirm(`Are you sure you want to delete this date and all its items?`)) {
-                delete winkles[winkleName].dates[date];
-                saveAndSync();
-                renderWinkles();
-            }
-        }
-
-        function updateDatePrice(winkleName, date, price) {
-            if (!winkles[winkleName].dates[date].price) {
-                winkles[winkleName].dates[date].price = '0';
-            }
-            winkles[winkleName].dates[date].price = price;
+        // Function to delete an item
+        function deleteItem(winkleName, itemIndex) {
+            winkles[winkleName].items.splice(itemIndex, 1);
             saveAndSync();
+            renderWinkles();
         }
 
-        function openTab(winkleName) {
-            // Store the active winkle
+        // Function to switch tab
+        function switchTab(winkleName) {
             activeWinkle = winkleName;
-            
-            // Update tab buttons
-            document.querySelectorAll('.tab-button').forEach(button => {
-                button.classList.remove('active');
-                if (button.textContent === winkleName) {
-                    button.classList.add('active');
-                }
-            });
-            
-            // Update tab panes
-            document.querySelectorAll('.tab-pane').forEach(pane => {
-                pane.classList.remove('active');
-                if (pane.id === `tab-${winkleName}`) {
-                    pane.classList.add('active');
-                }
-            });
+            renderWinkles();
         }
 
-        function toggleDateSection(header) {
-            const section = header.closest('.date-section');
-            section.classList.toggle('collapsed');
-        }
-
-        function formatDate(dateStr) {
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-            });
-        }
-
+        // Function to render the UI
         function renderWinkles() {
             const mainContent = document.getElementById('mainContent');
-            const tabContent = document.getElementById('tabContent');
-            
-            // Store current active winkle if not set
-            if (!activeWinkle && Object.keys(winkles).length > 0) {
-                activeWinkle = Object.keys(winkles)[0];
-            }
+            const tabButtons = document.getElementById('tabButtons');
             
             // Clear existing content
             mainContent.innerHTML = '';
-            tabContent.innerHTML = '';
-            
-            // Create tabs
-            Object.keys(winkles).forEach((winkleName) => {
-                const tabContainer = document.createElement('div');
-                tabContainer.className = 'tab-container-item';
-                
+            tabButtons.innerHTML = '';
+
+            // If no active winkle is set, set it to the first one
+            if (!activeWinkle && Object.keys(winkles).length > 0) {
+                activeWinkle = Object.keys(winkles)[0];
+            }
+
+            // Render tab buttons
+            Object.keys(winkles).forEach(winkleName => {
                 const tabButton = document.createElement('button');
                 tabButton.className = `tab-button ${winkleName === activeWinkle ? 'active' : ''}`;
-                tabButton.onclick = () => openTab(winkleName);
+                tabButton.onclick = () => switchTab(winkleName);
                 tabButton.textContent = winkleName;
-                
-                const deleteButton = document.createElement('button');
-                deleteButton.className = 'delete-btn delete-category-btn';
-                deleteButton.textContent = '×';
-                deleteButton.onclick = (e) => {
-                    e.stopPropagation();
-                    deleteWinkle(winkleName);
-                };
-                
-                tabContainer.appendChild(tabButton);
-                tabContainer.appendChild(deleteButton);
-                tabContent.appendChild(tabContainer);
-                
-                const winkleContent = document.createElement('div');
-                winkleContent.id = `tab-${winkleName}`;
-                winkleContent.className = `tab-pane ${winkleName === activeWinkle ? 'active' : ''}`;
-                
-                // Add date input for this category
-                const addDateDiv = document.createElement('div');
-                addDateDiv.className = 'add-date';
-                addDateDiv.innerHTML = `
-                    <input type="date" id="date-${winkleName}" min="${new Date().toISOString().split('T')[0]}">
-                    <button onclick="addDate('${winkleName}')">Add Date</button>
-                `;
-                winkleContent.appendChild(addDateDiv);
-                
-                // Create dates HTML
-                if (winkles[winkleName].dates) {
-                    const datesHTML = Object.entries(winkles[winkleName].dates)
-                        .sort(([dateA], [dateB]) => new Date(dateA) - new Date(dateB))
-                        .map(([date, dateData]) => `
-                            <div class="date-section">
-                                <div class="date-header" onclick="toggleDateSection(this)">
-                                    <div class="date-title">
-                                        <div class="date-info">
-                                            <span class="toggle-icon">▼</span>
-                                            <span>${formatDate(date)}</span>
-                                        </div>
-                                        <div class="date-actions">
-                                            <input type="number"
-                                                   class="price-input"
-                                                   placeholder="Total price..."
-                                                   value="${dateData.price || '0'}"
-                                                   onclick="event.stopPropagation();"
-                                                   onchange="updateDatePrice('${winkleName}', '${date}', this.value)">
-                                            <button class="delete-btn" onclick="event.stopPropagation(); deleteDate('${winkleName}', '${date}')">Delete Date</button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="winkle-items">
-                                    ${dateData.items && Array.isArray(dateData.items) ? dateData.items.map((item, index) => `
-                                        <div class="item ${item.completed ? 'completed' : ''}">
-                                            <div class="item-content">
-                                                <input type="checkbox" 
-                                                       class="checkbox" 
-                                                       ${item.completed ? 'checked' : ''}
-                                                       onchange="toggleItemComplete('${winkleName}', '${date}', ${index})">
-                                                <span class="item-name">${item.name}</span>
-                                                <input type="text"
-                                                       class="note-input"
-                                                       placeholder="Add note..."
-                                                       value="${item.note || ''}"
-                                                       onchange="updateItemNote('${winkleName}', '${date}', ${index}, this.value)">
-                                                <button class="delete-btn" onclick="deleteItem('${winkleName}', '${date}', ${index})">Delete</button>
-                                            </div>
-                                        </div>
-                                    `).join('') : ''}
-                                    <div class="add-item">
-                                        <input type="text" 
-                                               id="${winkleName}-${date}-itemName"
-                                               class="item-input" 
-                                               placeholder="Add new item..."
-                                               onkeypress="if(event.key === 'Enter') { addItem('${winkleName}', '${date}'); }">
-                                        <button onclick="addItem('${winkleName}', '${date}')">Add</button>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('');
-                    
-                    // Append dates HTML to winkle content
-                    const datesContainer = document.createElement('div');
-                    datesContainer.className = 'dates-container';
-                    datesContainer.innerHTML = datesHTML;
-                    winkleContent.appendChild(datesContainer);
-                }
-                
-                mainContent.appendChild(winkleContent);
+                tabButtons.appendChild(tabButton);
             });
+
+            // Render active winkle content
+            if (activeWinkle && winkles[activeWinkle]) {
+                const winkle = winkles[activeWinkle];
+                const winkleDiv = document.createElement('div');
+                winkleDiv.className = 'tab-pane active';
+
+                // Create header with category name and delete button
+                const header = document.createElement('div');
+                header.className = 'winkle-header';
+                header.innerHTML = `
+                    <span class="winkle-name">${activeWinkle}</span>
+                    <button onclick="deleteWinkle('${activeWinkle}')" class="delete-btn">Delete</button>
+                `;
+                winkleDiv.appendChild(header);
+
+                // Create items container
+                const itemsContainer = document.createElement('div');
+                itemsContainer.className = 'items-container';
+
+                // Add new item input field
+                const addItemDiv = document.createElement('div');
+                addItemDiv.className = 'add-item';
+                addItemDiv.innerHTML = `
+                    <input type="text" id="${activeWinkle}-newItem" placeholder="Enter new item name..."
+                           onkeypress="if(event.key === 'Enter') addItem('${activeWinkle}')">
+                    <button onclick="addItem('${activeWinkle}')" class="add-btn">Add Item</button>
+                `;
+                itemsContainer.appendChild(addItemDiv);
+
+                // Add items
+                if (winkle.items && winkle.items.length > 0) {
+                    winkle.items.forEach((item, itemIndex) => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'item';
+                        itemDiv.innerHTML = `
+                            <span class="item-name">${item.name}</span>
+                            <button onclick="deleteItem('${activeWinkle}', ${itemIndex})" class="delete-btn">Delete</button>
+                        `;
+                        itemsContainer.appendChild(itemDiv);
+                    });
+                }
+
+                winkleDiv.appendChild(itemsContainer);
+                mainContent.appendChild(winkleDiv);
+            }
         }
 
         // Initial render
