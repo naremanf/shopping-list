@@ -276,7 +276,7 @@
 
         <div class="list-actions">
             <button onclick="shareList()">Share List</button>
-            <button onclick="joinList()">Join List</button>
+            <button onclick="showJoinPrompt()">Join List</button>
         </div>
 
         <div class="add-winkle">
@@ -358,48 +358,53 @@
         }
 
         // Function to join an existing list
-        async function joinList() {
-            const code = prompt('Enter the list code:');
-            if (code) {
-                const syncStatus = document.getElementById('syncStatus');
-                syncStatus.style.display = 'block';
-                syncStatus.textContent = 'Joining list...';
+        async function joinList(code) {
+            const syncStatus = document.getElementById('syncStatus');
+            syncStatus.style.display = 'block';
+            syncStatus.textContent = 'Joining list...';
 
-                try {
-                    // Try to get the list
-                    const { data, error } = await supabaseClient
-                        .from('shopping_list')
-                        .select('*')
-                        .eq('code', code.toUpperCase())
-                        .single();
+            try {
+                const { data, error } = await supabaseClient
+                    .from('shopping_list')
+                    .select('*')
+                    .eq('code', code)
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .single();
 
-                    if (error) throw error;
+                if (error) throw error;
 
-                    // Successfully found the list
-                    listCode = code.toUpperCase();
-                    localStorage.setItem('listCode', listCode);
-                    
-                    if (data && data.data) {
-                        winkles = JSON.parse(data.data);
-                        localStorage.setItem('shoppingWinkles', JSON.stringify(winkles));
-                        renderWinkles();
-                    }
-
-                    // Setup real-time sync
-                    setupRealtimeSync();
+                if (data && data.data) {
+                    winkles = JSON.parse(data.data);
+                    localStorage.setItem('shoppingWinkles', JSON.stringify(winkles));
+                    localStorage.setItem('listCode', code);
+                    listCode = code;
                     
                     syncStatus.style.backgroundColor = '#4CAF50';
                     syncStatus.textContent = 'Joined list!';
-                } catch (error) {
-                    console.error('Join error:', error);
-                    syncStatus.style.backgroundColor = '#f44336';
-                    syncStatus.textContent = 'List not found';
-                    alert('List not found. Please check the code and try again.');
+                    
+                    setupRealtimeSync();
+                    renderWinkles();
+                } else {
+                    throw new Error('No list found with that code');
                 }
+            } catch (error) {
+                console.error('Join error:', error);
+                syncStatus.style.backgroundColor = '#f44336';
+                syncStatus.textContent = 'Failed to join list';
+                alert('Failed to join list. Please check the code and try again.');
+            }
 
-                setTimeout(() => {
-                    syncStatus.style.display = 'none';
-                }, 2000);
+            setTimeout(() => {
+                syncStatus.style.display = 'none';
+            }, 2000);
+        }
+
+        // Function to show join prompt
+        function showJoinPrompt() {
+            const code = prompt('Enter list code:');
+            if (code) {
+                joinList(code.toUpperCase());
             }
         }
 
